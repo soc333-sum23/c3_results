@@ -1,0 +1,93 @@
+---
+title: "Project description"
+callout-icon: false
+editor: visual
+---
+
+# Results {#results}
+
+In this component, you will perform an inferential statistical test that provides evidence regarding your research question. The results of inferential analyses allow you to draw some conclusions about the population that your data came from.
+
+The expectation is that you perform one test to provide evidence for one question.
+
+If your research question involves multiple sub-questions (e.g., is of the form "how does X affect Y and also how does Z affect Y" or "how does X affect Y and also how does X affect Z"), you are welcome and encouraged to perform additional statistical tests to investigate the additional sub-questions---copy and paste the relevant pieces. In this case, I will score your tests separately and count only the highest score towards your grade.
+
+```{r setup, include = FALSE}
+library(tidyverse)
+library(infer)
+library(openintro)
+```
+
+## Part 1: Analysis plan
+
+-   State your research question (from earlier project components, updated as necessary).
+
+-   Provide some information on your explanatory and response variables (from earlier project components, updated as necessary):
+
+    -   What is/are your **explanatory** (independent) variable(s)? For each, say if it is a numeric variable, a categorical variable with two levels, or a categorical variable with three or more levels.
+
+    -   What is/are your **response** (dependent) variable(s)? For each, say if it is a numeric variable, a categorical variable with two levels, or a categorical variable with three or more levels.
+
+-   Hypotheses:
+
+    -   State your null hypothesis.
+
+    -   State your alternative hypothesis.
+
+-   What statistical test will you use? Explain why this test is the right choice. (\~1-3 sentences)
+
+-   If necessary, make any necessary changes to your data frame (filtering out observations or creating variables) in the code chunk below. This code can be copied from component 2 (updated as necessary).
+
+```{r}
+lizardhabitats_filtered <- filter(lizard_habitat, site == "desert")
+
+lizardhabitats_newvars <- mutate(lizardhabitats_filtered, anysun = sunlight != "shade")
+
+table(lizardhabitats_newvars$site, useNA = "always")
+table(lizardhabitats_newvars$sunlight, lizardhabitats_newvars$anysun)
+```
+
+## Part 2: Analysis results
+
+-   Use the code chunk below to perform the analysis you described in part 1. Display your p value.
+
+```{r}
+# replace the contents of this chunk with your work
+
+# first we calculate the test statistic--here I am performing a chi square test of independence
+lizard_chisq_stat <- lizard_habitat |> 
+  specify(explanatory = site, response = sunlight) |>
+  hypothesize(null = "independence") |> 
+  calculate(stat = "Chisq")
+
+# then we simulate the null distribution of our test statistic--it is the same code as above, but we add "generate" to simulate what we would get if we took many samples from the population we assume under our null hypothesis.
+lizard_chisq_nulldist <- lizard_habitat |> 
+  specify(explanatory = site, response = sunlight) |> 
+  hypothesize(null = "independence") |> 
+  generate(reps = 1000) |> 
+  calculate(stat = "Chisq")
+
+# finally, we use the two pieces to get our p value
+p <- lizard_chisq_nulldist |> 
+  get_p_value(obs_stat = lizard_chisq_stat, direction = "greater")
+
+# and we display it
+p$p_value
+```
+
+-   Plot your null distribution. Shade the part corresponding to your p value.
+
+```{r}
+# replace the contents of this chunk with your work
+
+# here, we take the null distribution and test statistic we calculated above, use the "visualize" function to plot it, and then mark the part of the distribution that is as or more extreme than what we observed (no shading appears here because our test statistic for this lizard data is quite extreme)
+lizard_chisq_nulldist |> 
+  visualize() + 
+  shade_p_value(obs_stat = lizard_chisq_stat, direction = "greater")
+```
+
+-   Interpret the p value for your test. Using a threshold of p \< .05, do you reject or fail to reject your null hypothesis? (\~2-3 sentences)
+
+-   What conclusions can you draw about your research question? (\~1-3 sentences)
+
+-   What *don't* your results tell you about your research question? In other words, what are some reasonable next steps for future research in this area? (\~2-4 sentences)
